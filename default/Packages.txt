@@ -1,0 +1,3 @@
+net-tools
+vim
+openssl

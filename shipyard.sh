@@ -71,7 +71,7 @@ Continue? [Y/n]"
     rm -fr /tmp/shipyard &>/dev/null
     mkdir /tmp/shipyard &>/dev/null
     cp -r . /tmp/shipyard/ &>/dev/null
-    echo "$BASHRC" > /tmp/shipyard/.bashrc
+    #echo "$BASHRC" > /tmp/shipyard/.bashrc
     docker run -it $IP --rm -v /tmp/shipyard:/root $1 bash
     
     # Delete the shipyard net if we just created it
@@ -99,7 +99,7 @@ if [ "$?" != "0" ] && [ "$COM" != "install" ]; then
 fi
 
 # Parse the args
-flag=`getopt -u -o i:a:h: -l image:,address:,help: -n Shipyard -- "$@"` ;
+flag=`getopt -u -o i:a:n:h: -l image:,address:,help: -n Shipyard -- "$@"` ;
 if [ "$?" != "0" ]; then
     USAGE
     exit;
@@ -107,7 +107,7 @@ fi
 # Set the positional arguments to the output of flag
 set -- $flag
 # Default args
-IMAGE="Shipyard"
+IMAGE="shipyard"
 # Loop through the args and set values accordingly
 while true; do
     case "$1" in
