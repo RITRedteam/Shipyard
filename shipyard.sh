@@ -24,10 +24,6 @@ install() {
     # Install docker if required
     command -v docker &>/dev/null;
     [ "$?" = "0" ] && echo "Docker is already installed" && return
-    # Verify that docker should be installed
-    printf 'Are you sure you want to install? [y/N]'
-    read inst
-    [ "$inst" != "y" ] && return
     
     curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
     echo 'deb https://download.docker.com/linux/debian stretch stable' > /etc/apt/sources.list.d/docker.list
@@ -38,7 +34,7 @@ install() {
 }
 
 setnetwork() {
-    # Create a test network for the docker images to use
+    # Create a network for the docker images to use
     [ "$1" = "" ] && echo "USAGE: $0 setnetwork <ip-address>" && return
     # Check if the network exists, if so, delete it
     if [ "`docker network ls | grep 'shipyard-net'`" != "" ]; then
@@ -84,20 +80,50 @@ Continue? [Y/n]"
         echo "[*] Deleted the Shipyard network"
     fi
 }
-COM=$1
-if [ "$COM" = "" ]; then
+
+USAGE() {
     echo -e "USAGE: $0 <command>"
     echo -e "\nCommands:"
     echo -e "\trun <image> [ip]\n\tsetnetwork <ip>\n\tinstall"
-    exit
-fi
-# Check if docker is installed
+}
+
+# Check if docker is installed, prompt for install if not
 command -v docker &>/dev/null;
 if [ "$?" != "0" ] && [ "$COM" != "install" ]; then
-    echo "Docker is not installed"
-    echo "run '$0 install' to install docker"
+    echo -n 'Docker is not installed. Would you like to install? [y/N]'
+    read inst
+    if [ "$inst" = "y" ]; then
+	install
+    fi
     exit
 fi
 
-shift
-$COM $@
+# Parse the args
+flag=`getopt -u -o i:a:h: -l image:,address:,help: -n Shipyard -- "$@"` ;
+if [ "$?" != "0" ]; then
+    USAGE
+    exit;
+fi
+# Set the positional arguments to the output of flag
+set -- $flag
+# Default args
+IMAGE="Shipyard"
+# Loop through the args and set values accordingly
+while true; do
+    case "$1" in
+	-n | --add-network )
+	    setnetwork $2; exit ;;
+	-i | --image )
+	    IMAGE=$2; shift 2 ;;
+	-a | --address )
+	    IP=$2; shift 2 ;;
+	-h | --help )
+	    USAGE; exit ;;
+	-- )
+	    shift; break ;;
+	* )
+	    break ;;
+    esac;
+done;
+
+run $IMAGE $IP
