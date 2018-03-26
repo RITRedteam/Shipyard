@@ -46,6 +46,25 @@ setnetwork() {
     [ "$?" != "0" ] && echo -e "ERROR CREATING NETWORK:\n $res" && exit
 }
 
+copydir() {
+    # Copy the current directory into the docker image. Check the size to make
+    # Make sure we arnt copying a million files into the directory
+    total="$(du -cs . | grep total | cut -f1)";
+    totalh="$(du -chs . | grep total | cut -f1)";
+    if [ "$total" -gt "1000" ]; then
+        echo "The current directory is $totalh. Copy to container anyway? [y/N]";
+        read inst;
+        [ "$inst" != "y" ] && exit;
+    fi;
+    # By default docker -v reflects changes made in the container onto the host
+    # We dont want this so we copy everything to a tmp directory
+    rm -fr /tmp/shipyard &>/dev/null;
+    mkdir /tmp/shipyard &>/dev/null;
+    cp -r . /tmp/shipyard/ &>/dev/null;
+    echo "$BASHRC" > /tmp/shipyard/.bashrc;
+    cp ~/.vimrc /tmp/shipyard/.vimrc;
+}
+
 run() {
     # Run a docker image
     # Mount the current directory to the docker image in /root
@@ -61,17 +80,11 @@ run() {
         fi
         IP="--net shipyard-net --ip $2"
     fi
-    echo -e "Executing:\n\tdocker run -it $IP --rm -v `pwd`:/root $1 bash
-Continue? [Y/n]"
-    read inst
-    [ "$inst" = "n" ] && return
-    
-    # By default docker -v reflects changes made in the container onto the host
-    # We dont want this so we copy everything to a tmp directory
-    rm -fr /tmp/shipyard &>/dev/null
-    mkdir /tmp/shipyard &>/dev/null
-    cp -r . /tmp/shipyard/ &>/dev/null
-    echo "$BASHRC" > /tmp/shipyard/.bashrc
+    # Copy the files into the directory
+    copydir
+    # Display a message
+    echo "Starting $1 `[ "$2" != "" ] && echo with ip $2`"
+
     docker run -it $IP --rm -v /tmp/shipyard:/root $1 bash
     
     # Delete the shipyard net if we just created it
