@@ -1,9 +1,24 @@
 # Shipyard
 Quickly generate and destroy docker hosts for malware testing
 
+## Installation and Setup
+If docker is not installed, shipyard will install it
+> Installation has only been testing on debian/kali linux
+
+Make sure the docker service is running
+`service docker start`
+
+Build the default shipyard docker image
+`docker build -t shipyard default`
+
+Allow shipyard to run from anywhere
+```
+ln -s `pwd`/shipyard.sh /bin/shipyard
+```
+
+Shipyard is now fully setup and ready for use.
 
 ## Usage
-
 Run a new container for testing
 `./shipyard -i ubuntu:xenial`
 
