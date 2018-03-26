@@ -5,3 +5,5 @@ wget
 curl
 vim
 openssl
+python3
+python3-requests
